@@ -34,11 +34,13 @@ sequenceDiagram
 
 ## Best Practices & Ausnahmen
 ### Best Practices
-- **Batch Processing:** Abruf der Mitarbeiterdaten gesammelt, um API-Calls zu minimieren.
+- **Aggregated Messaging (Optimization):** Anstatt für jeden Mitarbeiter eine einzelne Nachricht durch die Integration Suite zu schleusen, werden Mitarbeiter mit dem gleichen Standort gruppiert (Batching). Dies reduziert das Nachrichtenaufkommen in der IS drastisch.
+- **Delta-Processing:** Nur Mitarbeiter, deren Standort sich geändert hat oder für die seit dem letzten Check eine neue Wetterwarnung vorliegt, werden prozessiert.
 - **Payload-Filterung:** Nur notwendige Felder (Email, City) von SAP abfragen.
 - **Asynchrone Benachrichtigung:** Die Integration Suite wartet nicht auf die Zustellung der Nachricht, um den Prozess nicht zu blockieren.
 
-### Ausnahmen (Error Handling)
+### Stabilität & Error Handling
+- **Circuit Breaker:** Wenn die Wetter-API oder der Notification-Service dauerhaft Fehler liefert, wird der Prozess pausiert, um die Integration Suite nicht mit unnötigen Retry-Nachrichten zu fluten.
 - **API Timeout:** Implementierung eines Exponential Backoff bei der Wetter-API.
 - **Fehlende Standortdaten:** Mitarbeiter ohne validen Standort werden geloggt, aber der Prozess läuft für andere weiter.
-- **Rate Limiting:** Einhaltung der Quotas der externen Wetter-API.
+- **Rate Limiting:** Einhaltung der Quotas der externen Wetter-API durch ein zentrales Throttling in der IS.
